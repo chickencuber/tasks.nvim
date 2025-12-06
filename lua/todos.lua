@@ -64,7 +64,7 @@ end
 ---@param show_closed boolean
 local function get_table(cwd, show_closed)
     local task_dir = vim.fs.joinpath(cwd, ".tasks")
-    if vim.fn.isdirectory(task_dir) then
+    if vim.fn.isdirectory(task_dir) == 1 then
 
         local files = vim.fs.find(function(name)
             return name:match('.*%.md$')
