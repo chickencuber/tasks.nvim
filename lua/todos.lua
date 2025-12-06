@@ -242,6 +242,7 @@ function M.setup(opts)
         vim.fn.mkdir(vim.fs.joinpath(cwd, ".tasks"))
     end, {})
     vim.api.nvim_create_user_command("TaskFromTodo", function(_)
+        --TASK(20251206-004408-812-n6-024): add support for block comments
         local line = vim.api.nvim_get_current_line()
         local reg = ([[(%%s*%s%%s*)TODO (.*)]]):format(
             vim.bo.commentstring:format(""):gsub("^%s+", ""):gsub("%s+$", "")
