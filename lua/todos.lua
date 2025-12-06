@@ -115,5 +115,4 @@ end
 
 --TASK(20251205-222502-629-n6-789): add menu to manage tasks
 
-M.setup()
 return M;
