@@ -55,8 +55,9 @@ function M.setup(opts)
         local _, col = unpack(vim.api.nvim_win_get_cursor(0))
         col = col + 1
 
-        local reg = ([[TASK%((%d%d%d%d%d%d%d%d-%d%d%d%d%d%d-%d%d%d-[np]%d)-%d%d%d%)]])
+        local reg = ([[TASK%((%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%d%d%d)%)]])
         local s, e, id = line:find(reg)
+        print(s)
 
         if s and e then
             if col >= s and col <= e then
@@ -114,4 +115,5 @@ end
 
 --TASK(20251205-222502-629-n6-789): add menu to manage tasks
 
+M.setup()
 return M;
