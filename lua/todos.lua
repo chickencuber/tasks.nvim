@@ -59,25 +59,29 @@ local function parse_task_file(file)
     return nil
 end
 
----@return {id: string, title: string, status: string, file: string, extra:string[]}[]
+---@return {id: string, title: string, status: string, file: string, extra:string[]}[]|nil
 ---@param cwd string
 ---@param show_closed boolean
 local function get_table(cwd, show_closed)
     local task_dir = vim.fs.joinpath(cwd, ".tasks")
+    if vim.fn.isdirectory(task_dir) then
 
-    local files = vim.fs.find(function(name)
-        return name:match('.*%.md$')
-    end, { limit = math.huge, type = 'file' , path = task_dir})
+        local files = vim.fs.find(function(name)
+            return name:match('.*%.md$')
+        end, { limit = math.huge, type = 'file' , path = task_dir})
 
-    local open_tasks = {}
+        local open_tasks = {}
 
-    for _, f in ipairs(files) do
-        local task = parse_task_file(f)
-        if task and (task.status == "OPEN" or show_closed) then
-            table.insert(open_tasks, task)
+        for _, f in ipairs(files) do
+            local task = parse_task_file(f)
+            if task and (task.status == "OPEN" or show_closed) then
+                table.insert(open_tasks, task)
+            end
         end
+        return open_tasks
+    else
+        return nil
     end
-    return open_tasks
 end
 
 --TASK(20251205-230155-330-n6-984): add menu to manage tasks
@@ -106,8 +110,10 @@ function M.setup(opts)
             if col >= s and col <= e then
                 vim.fn.setreg('"', full)
                 print("Yanked " .. full)
+                return
             end
         end
+        print("No Tasks Found")
     end, {})
 
     vim.api.nvim_create_user_command("TaskMenu", function(args) -- see TASK(20251205-230155-330-n6-984)
@@ -119,6 +125,10 @@ function M.setup(opts)
             show_closed = true
         end
         local t= get_table(cwdfn(), show_closed)
+        if t == nil then
+            print("Task dir not found")
+            return
+        end
         local width = math.floor(vim.o.columns * 0.6)
         local height = math.floor(vim.o.lines * 0.4)
         local row = math.floor((vim.o.lines - height) / 2)
@@ -220,6 +230,10 @@ function M.setup(opts)
         if s and e then
             if col >= s and col <= e then
                 local path = find_path()
+                if path == nil then
+                    print("Task dir not found")
+                    return
+                end
                 local file = vim.fs.joinpath(path, ("%s.md"):format(id))
                 if vim.uv.fs_stat(file) ~= nil then
                     if menu then
@@ -232,9 +246,14 @@ function M.setup(opts)
                             buf = 0
                         })
                     end
+                    return
+                else
+                    print(("Task %s not found"):format(id))
+                    return
                 end
             end
         end
+        print("No Tasks found")
     end, {})
 
     vim.api.nvim_create_user_command('TaskInit', function(_)
@@ -271,7 +290,11 @@ function M.setup(opts)
                         buf = 0
                     })
                 end
+            else
+                print("Task dir not found")
             end
+        else
+            print("No TODO comment found")
         end
     end, {})
 end
