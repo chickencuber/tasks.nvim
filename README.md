@@ -32,5 +32,5 @@ vim.keymap.set("n", "gt", vim.cmd.TaskGoto)
 - `:TaskMenu show_closed?` creates a menu where you can manage the Tasks if the first argument is show_closed, then it will show all closed tasks
 
 ## keybinds(in menu)
-`y` yanks the task identifier 
-`dd` marks the task as closed(toggles it instead if show_closed is set)
+- `y` yanks the task identifier   
+- `dd` marks the task as closed(toggles it instead if show_closed is set)
