@@ -61,7 +61,8 @@ end
 
 ---@return {id: string, title: string, status: string, file: string, extra:string[]}[]
 ---@param cwd string
-local function get_table(cwd)
+---@param show_closed boolean
+local function get_table(cwd, show_closed)
     local task_dir = vim.fs.joinpath(cwd, ".tasks")
 
     local files = vim.fs.find(function(name)
@@ -72,7 +73,7 @@ local function get_table(cwd)
 
     for _, f in ipairs(files) do
         local task = parse_task_file(f)
-        if task and task.status == "OPEN" then
+        if task and (task.status == "OPEN" or show_closed) then
             table.insert(open_tasks, task)
         end
     end
@@ -109,10 +110,15 @@ function M.setup(opts)
         end
     end, {})
 
-    vim.api.nvim_create_user_command("TaskMenu", function() -- see TASK(20251205-230155-330-n6-984)
-        local t= get_table(cwdfn())
+    vim.api.nvim_create_user_command("TaskMenu", function(args) -- see TASK(20251205-230155-330-n6-984)
+        --TASK(20251206-001046-495-n6-030): make the Menu keybinds customizable
         local buf = vim.api.nvim_create_buf(false, true)
-
+        local arg = args.args
+        local show_closed = false
+        if arg == "show_closed" then
+            show_closed = true
+        end
+        local t= get_table(cwdfn(), show_closed)
         local width = math.floor(vim.o.columns * 0.6)
         local height = math.floor(vim.o.lines * 0.4)
         local row = math.floor((vim.o.lines - height) / 2)
@@ -141,17 +147,27 @@ function M.setup(opts)
         vim.keymap.set("n", "dd", function()
             local i= vim.api.nvim_win_get_cursor(0)[1]
             local entry = t[i]
-            table.remove(entry, i)
+            local set = "CLOSED"
+            if entry.status == "CLOSED" and show_closed then
+                set = "OPEN"
+            end
+            vim.api.nvim_set_option_value("modifiable", true, {buf = buf})
+            if show_closed then
+                entry.status = set
+                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                    ("TASK(%s): %s: %s"):format(entry.id, entry.title, entry.status)
+                })
+            else
+                table.remove(t, i)
+                vim.api.nvim_buf_set_lines(0, i-1, i, false, {})
+            end
+            vim.api.nvim_set_option_value("modifiable", false, {buf = buf})
             vim.fn.writefile({
                 ("# %s"):format(entry.title),
                 "",
-                "- CLOSED",
+                ("- %s"):format(set),
                 unpack(entry.extra)
             }, entry.file)
-
-            vim.api.nvim_set_option_value("modifiable", true, {buf = buf})
-            vim.api.nvim_buf_set_lines(0, i-1, i, false, {})
-            vim.api.nvim_set_option_value("modifiable", false, {buf = buf})
         end, { buffer = buf, noremap = true, silent = true })
 
         vim.api.nvim_create_autocmd("CursorMoved", {
@@ -179,12 +195,20 @@ function M.setup(opts)
         end, { buffer = buf, noremap = true, silent = true })
         menu = true
         for i, v in pairs(t) do
-            vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
-                ("TASK(%s): %s"):format(v.id, v.title)
-            })
+            if show_closed then
+                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                    ("TASK(%s): %s: %s"):format(v.id, v.title, v.status)
+                })
+            else
+                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                    ("TASK(%s): %s"):format(v.id, v.title)
+                })
+            end
         end
         vim.api.nvim_set_option_value("modifiable", false, {buf = buf})
-    end, {})
+    end, {
+    nargs = "*"
+})
     vim.api.nvim_create_user_command("TaskGoto", function()
         local line = vim.api.nvim_get_current_line()
         local _, col = unpack(vim.api.nvim_win_get_cursor(0))

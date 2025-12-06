@@ -28,3 +28,9 @@ vim.keymap.set("n", "gt", vim.cmd.TaskGoto)
 - `:TaskInit` initializes the task directory in the cwd
 - `:TaskFromTodo` takes a TODO comment(--TODO or //TODO), and turns it into a task 
 - `:TaskGoto` sends you to the file of the task that is being referenced
+- `:TaskYank` yanks the task identifier
+- `:TaskMenu show_closed?` creates a menu where you can manage the Tasks if the first argument is show_closed, then it will show all closed tasks
+
+## keybinds(in menu)
+`y` yanks the task identifier 
+`dd` marks the task as closed(toggles it instead if show_closed is set)
