@@ -14,7 +14,7 @@ local function create_id()
         elseif offset > 0 then
             offset_str = ("p%d"):format(offset)
         else
-            offset_str = "00"
+            offset_str = "p0"
         end
         local millis = math.floor(select(2, vim.uv.gettimeofday()) / 1000)
         -- random to prevent possible collisions
@@ -55,7 +55,7 @@ function M.setup(opts)
         local _, col = unpack(vim.api.nvim_win_get_cursor(0))
         col = col + 1
 
-        local reg = [[TASK%((..........................)%)]]
+        local reg = ([[TASK%((%d%d%d%d%d%d%d%d-%d%d%d%d%d%d-%d%d%d-[np]%d)-%d%d%d%)]])
         local s, e, id = line:find(reg)
 
         if s and e then
@@ -93,6 +93,7 @@ function M.setup(opts)
                     ("# TODO: %s"):format(suffix),
                     "",
                     "- OPEN",
+                    -- any extra details would go after this
                 }, file)
                 local row = vim.api.nvim_win_get_cursor(0)[1]
                 vim.api.nvim_buf_set_lines(0, row-1, row, false, {
@@ -110,5 +111,7 @@ function M.setup(opts)
         end
     end, {})
 end
+
+--TASK(20251205-222502-629-n6-789): add menu to manage tasks
 
 return M;
