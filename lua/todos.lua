@@ -142,6 +142,8 @@ function M.setup(opts)
             row = row,
             col = col,
             border = "rounded",
+            title="Tasks",
+            title_pos = "center",
         }
         vim.api.nvim_open_win(buf, true, window)
 
