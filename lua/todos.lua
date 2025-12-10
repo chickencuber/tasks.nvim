@@ -119,6 +119,9 @@ function M.setup(opts)
     vim.api.nvim_create_user_command("TaskMenu", function(args) -- see TASK(20251205-230155-330-n6-984)
         --TASK(20251207-200923-784-n6-168): add Title to the menu
         --TASK(20251206-001046-495-n6-030): make the Menu keybinds customizable
+        if menu then
+            return
+        end
         local buf = vim.api.nvim_create_buf(false, true)
         local arg = args.args
         local show_closed = false
