@@ -24,6 +24,17 @@ local function create_id()
     return ""
 end
 
+local function get_default_clip_reg()
+  local cb = vim.o.clipboard
+  if cb:find("unnamedplus") then
+    return "+"
+  elseif cb:find("unnamed") then
+    return '"'
+  else
+    return '"'
+  end
+end
+
 ---@return string|nil
 local function find_path()
     local root = vim.loop.os_uname().version:match("^Windows") and "C:\\" or "/"
@@ -108,7 +119,7 @@ function M.setup(opts)
 
         if s and e then
             if col >= s and col <= e then
-                vim.fn.setreg('"', full)
+                vim.fn.setreg(get_default_clip_reg(), full)
                 print("Yanked " .. full)
                 return
             end
@@ -197,7 +208,7 @@ function M.setup(opts)
         vim.keymap.set("n", "y", function()
             local i= vim.api.nvim_win_get_cursor(0)[1]
             local text = ("TASK(%s)"):format(t[i].id);
-            vim.fn.setreg('"', text)
+            vim.fn.setreg(get_default_clip_reg(), text)
             print("Yanked " .. text)
         end, { buffer = buf, noremap = true, silent = true })
 
