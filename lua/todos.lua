@@ -216,6 +216,8 @@ function M.setup(opts)
             vim.api.nvim_win_close(0, true)
             menu = false;
         end, { buffer = buf, noremap = true, silent = true })
+        vim.keymap.set("n", "<CR>",
+            vim.cmd.TaskGoto, { buffer = buf, noremap = true, silent = true })
         vim.keymap.set("n", "<Esc>", function()
             vim.api.nvim_win_close(0, true)
             menu = false;

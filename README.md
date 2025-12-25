@@ -34,3 +34,4 @@ vim.keymap.set("n", "gt", vim.cmd.TaskGoto)
 ## keybinds(in menu)
 - `y` yanks the task identifier   
 - `dd` marks the task as closed(toggles it instead if show_closed is set)
+- 'ENTER' goes to the file the task is in
