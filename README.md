@@ -1,5 +1,5 @@
 # Tasks.nvim
-this is a work in progress plugin for nvim it adds a task system that is embeded in the code  
+this is a work in progress plugin for nvim it adds a task system that is embedded in the code  
 ## Install(Lazy)
 ```lua
 return {
@@ -10,7 +10,7 @@ return {
 }
 
 ```
-## Defualt Options
+## Default Options
 ```lua
 {
     cwdfn = function() return vim.fn.getcwd() end,
