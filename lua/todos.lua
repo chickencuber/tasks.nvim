@@ -24,6 +24,14 @@ local function create_id()
     return ""
 end
 
+local function split(str, sep)
+    local result = {}
+    for part in string.gmatch(str, "([^" .. sep .. "]+)") do
+        table.insert(result, part)
+    end
+    return result
+end
+
 local function get_default_clip_reg()
   local cb = vim.o.clipboard
   if cb:find("unnamedplus") then
@@ -125,6 +133,41 @@ function M.setup(opts)
             end
         end
         print("No Tasks Found")
+    end, {})
+
+    vim.api.nvim_create_user_command("TaskGenerateMarkdown", function()
+        local f = find_path()
+        if f == nil then
+            return
+        end
+        local path = vim.fs.dirname(f)
+        local new = vim.fs.joinpath(path, "TODO.md");
+        local t = get_table(cwdfn(), true)
+        if t == nil then
+            return
+        end
+        local md = "# TODOS\n"
+        for _, v in pairs(t) do
+            md = md .. "- ["
+            if v.status == "CLOSED" then
+                md = md .. "X"
+            else
+                md = md .. " "
+            end
+            md = md .. "] "
+            md = md .. v.title
+
+            for _, e in pairs(v.extra) do
+                if e == "" then
+                    goto continue
+                end
+                md = md .. "\n    "
+                md = md .. e
+                ::continue::
+            end
+            md = md .. "\n"
+        end
+        vim.fn.writefile(split(md, "\n"), new)
     end, {})
 
     vim.api.nvim_create_user_command("TaskMenu", function(args) -- see TASK(20251205-230155-330-n6-984)
