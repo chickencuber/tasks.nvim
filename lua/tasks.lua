@@ -3,7 +3,7 @@ local M = {};
 local function create_id()
     local now = os.time()
     local d = os.date("!*t")
-    --HACK branch impossible, just here to make the lsp happy
+    --HACK will always be true, just here to make the lsp happy
     if type(d) ~= "string" then
         local utc = os.time(d)
         local offset = os.difftime(now, utc) / 3600
@@ -18,6 +18,7 @@ local function create_id()
         end
         local millis = math.floor(select(2, vim.uv.gettimeofday()) / 1000)
         -- random to prevent possible collisions
+        -- yes overboard, I know
         local id = ("%s-%03d-%s-%03d"):format(date, millis,offset_str, math.random(0, 999))
         return id
     end
@@ -135,6 +136,7 @@ function M.setup(opts)
         print("No Tasks Found")
     end, {})
 
+    --TASK(20260430-090400-752-n6-301): make this get called automatically when adding, closing, reopening, etc…
     vim.api.nvim_create_user_command("TaskGenerateMarkdown", function()
         local f = find_path()
         if f == nil then
@@ -156,18 +158,15 @@ function M.setup(opts)
             end
             md = md .. "] "
             md = md .. v.title
-
-            for _, e in pairs(v.extra) do
-                if e == "" then
-                    goto continue
-                end
-                md = md .. "\n    "
-                md = md .. e
-                ::continue::
-            end
+            md = md .. ": [TASK("
+            md = md .. v.id
+            md = md .. ")](./.tasks/"
+            md = md .. v.id
+            md = md .. ")  "
             md = md .. "\n"
         end
         vim.fn.writefile(split(md, "\n"), new)
+        print("finished saving TODO.md")
     end, {})
 
     vim.api.nvim_create_user_command("TaskMenu", function(args) -- see TASK(20251205-230155-330-n6-984)
@@ -238,6 +237,7 @@ function M.setup(opts)
                 ("- %s"):format(set),
                 unpack(entry.extra)
             }, entry.file)
+            vim.cmd.TaskGenerateMarkdown(); -- see TASK(20260430-090400-752-n6-301)
         end, { buffer = buf, noremap = true, silent = true })
 
         vim.api.nvim_create_autocmd("CursorMoved", {
@@ -340,6 +340,7 @@ vim.api.nvim_create_user_command("TaskFromTodo", function(_)
                 "- OPEN",
                 -- any extra details would go after this
             }, file)
+            vim.cmd.TaskGenerateMarkdown(); -- see TASK(20260430-090400-752-n6-301)
             local row = vim.api.nvim_win_get_cursor(0)[1]
             vim.api.nvim_buf_set_lines(0, row-1, row, false, {
                 ("%sTASK(%s): %s"):format(
