@@ -162,7 +162,7 @@ function M.setup(opts)
             md = md .. v.id
             md = md .. ")](./.tasks/"
             md = md .. v.id
-            md = md .. ")  "
+            md = md .. ".md)  "
             md = md .. "\n"
         end
         vim.fn.writefile(split(md, "\n"), new)
