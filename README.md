@@ -15,7 +15,7 @@ return {
 ```lua
 {
     cwdfn = function() return vim.fn.getcwd() end,
-    cmd = "split", -- split | vslpit | edit
+    cmd = "split", -- split | vsplit | edit
     hide = true, -- or false
 }
 ```
