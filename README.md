@@ -1,5 +1,6 @@
 # Tasks.nvim
 this is a work in progress plugin for nvim it adds a task system that is embedded in the code  
+inspired by Tsoding's [snitch](https://github.com/tsoding/snitch)
 ## Install(Lazy)
 ```lua
 return {
