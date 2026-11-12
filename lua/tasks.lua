@@ -19,7 +19,7 @@ local function create_id()
         local millis = math.floor(select(2, vim.uv.gettimeofday()) / 1000)
         -- random to prevent possible collisions
         -- yes overboard, I know
-        local random = vim.uv.random(3)
+        local random = vim.uv.random(4)
         if random == nil then
             return ""
         end
