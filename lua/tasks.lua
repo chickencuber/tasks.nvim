@@ -19,7 +19,17 @@ local function create_id()
         local millis = math.floor(select(2, vim.uv.gettimeofday()) / 1000)
         -- random to prevent possible collisions
         -- yes overboard, I know
-        local id = ("%s-%03d-%s-%03d"):format(date, millis,offset_str, math.random(0, 999))
+        local random = vim.uv.random(3)
+        if random == nil then
+            return ""
+        end
+        local random_number = (
+            random:byte(1) * 16777216 +
+            random:byte(2) * 65536 +
+            random:byte(3) * 256 +
+            random:byte(4)
+        )
+        local id = ("%s-%03d-%s-%08x"):format(date, millis,offset_str, random_number)
         return id
     end
     return ""
