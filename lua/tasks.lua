@@ -29,7 +29,7 @@ local function create_id()
             random:byte(3) * 256 +
             random:byte(4)
         )
-        local id = ("%s-%03d-%s-%08x"):format(date, millis,offset_str, random_number)
+        local id = ("%s-%03d-%s-%08x"):format(date, millis, offset_str, random_number)
         return id
     end
     return ""
@@ -41,6 +41,27 @@ local function split(str, sep)
         table.insert(result, part)
     end
     return result
+end
+
+local TASK_ID_PATTERN =
+"%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%d%d%d"
+
+local TASK_ID_PATTERN_NEW =
+"%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%x%x%x%x%x%x%x%x"
+
+local function match_task_id(str)
+    local patterns = {
+        "TASK%((" .. TASK_ID_PATTERN_NEW .. ")%)",
+        "TASK%((" .. TASK_ID_PATTERN .. ")%)",
+    }
+
+    for _, pattern in ipairs(patterns) do
+        local s, e, id = str:find(pattern)
+        if s then
+            return s, e, id, ("TASK(%s)"):format(id)
+        end
+    end
+    return nil
 end
 
 local function get_default_clip_reg()
@@ -84,7 +105,7 @@ local function parse_task_file(file)
         table.insert(extra, lines[i])
     end
     if title and status then
-        return { id = id, title = title, status = status, file=file, extra = extra}
+        return { id = id, title = title, status = status, file = file, extra = extra }
     end
     return nil
 end
@@ -95,10 +116,9 @@ end
 local function get_table(cwd, show_closed)
     local task_dir = vim.fs.joinpath(cwd, ".tasks")
     if vim.fn.isdirectory(task_dir) == 1 then
-
         local files = vim.fs.find(function(name)
             return name:match('.*%.md$')
-        end, { limit = math.huge, type = 'file' , path = task_dir})
+        end, { limit = math.huge, type = 'file', path = task_dir })
 
         local open_tasks = {}
 
@@ -119,7 +139,7 @@ end
 --TASK(20251205-230204-234-n6-128): add better error handling
 function M.setup(opts)
     opts = opts or {}
-    local cwdfn = opts.cwdfn or function ()
+    local cwdfn = opts.cwdfn or function()
         return vim.fn.getcwd()
     end
     local cmd = opts.cmd or "split"
@@ -133,8 +153,7 @@ function M.setup(opts)
         local _, col = unpack(vim.api.nvim_win_get_cursor(0))
         col = col + 1
 
-        local reg = ([[(TASK%(%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%d%d%d%))]])
-        local s, e, full = line:find(reg)
+        local s, e, _, full = match_task_id(line)
 
         if s and e then
             if col >= s and col <= e then
@@ -191,7 +210,7 @@ function M.setup(opts)
         if arg == "show_closed" then
             show_closed = true
         end
-        local t= get_table(cwdfn(), show_closed)
+        local t = get_table(cwdfn(), show_closed)
         if t == nil then
             print("Task dir not found")
             return
@@ -208,7 +227,7 @@ function M.setup(opts)
             row = row,
             col = col,
             border = "rounded",
-            title="Tasks",
+            title = "Tasks",
             title_pos = "center",
         }
         vim.api.nvim_open_win(buf, true, window)
@@ -224,23 +243,23 @@ function M.setup(opts)
             end
         })
         vim.keymap.set("n", "dd", function()
-            local i= vim.api.nvim_win_get_cursor(0)[1]
+            local i = vim.api.nvim_win_get_cursor(0)[1]
             local entry = t[i]
             local set = "CLOSED"
             if entry.status == "CLOSED" and show_closed then
                 set = "OPEN"
             end
-            vim.api.nvim_set_option_value("modifiable", true, {buf = buf})
+            vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
             if show_closed then
                 entry.status = set
-                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                vim.api.nvim_buf_set_lines(buf, i - 1, i, false, {
                     ("TASK(%s): %s: %s"):format(entry.id, entry.title, entry.status)
                 })
             else
                 table.remove(t, i)
-                vim.api.nvim_buf_set_lines(0, i-1, i, false, {})
+                vim.api.nvim_buf_set_lines(0, i - 1, i, false, {})
             end
-            vim.api.nvim_set_option_value("modifiable", false, {buf = buf})
+            vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
             vim.fn.writefile({
                 ("# %s"):format(entry.title),
                 "",
@@ -259,7 +278,7 @@ function M.setup(opts)
         })
 
         vim.keymap.set("n", "y", function()
-            local i= vim.api.nvim_win_get_cursor(0)[1]
+            local i = vim.api.nvim_win_get_cursor(0)[1]
             local text = ("TASK(%s)"):format(t[i].id);
             vim.fn.setreg(get_default_clip_reg(), text)
             print("Yanked " .. text)
@@ -270,7 +289,7 @@ function M.setup(opts)
             menu = false;
         end, { buffer = buf, noremap = true, silent = true })
         vim.keymap.set("n", "<CR>",
-        vim.cmd.TaskGoto, { buffer = buf, noremap = true, silent = true })
+            vim.cmd.TaskGoto, { buffer = buf, noremap = true, silent = true })
         vim.keymap.set("n", "<Esc>", function()
             vim.api.nvim_win_close(0, true)
             menu = false;
@@ -278,107 +297,105 @@ function M.setup(opts)
         menu = true
         for i, v in pairs(t) do
             if show_closed then
-                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                vim.api.nvim_buf_set_lines(buf, i - 1, i, false, {
                     ("TASK(%s): %s: %s"):format(v.id, v.title, v.status)
                 })
             else
-                vim.api.nvim_buf_set_lines(buf, i-1, i, false, {
+                vim.api.nvim_buf_set_lines(buf, i - 1, i, false, {
                     ("TASK(%s): %s"):format(v.id, v.title)
                 })
             end
         end
-        vim.api.nvim_set_option_value("modifiable", false, {buf = buf})
+        vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
     end, {
-    nargs = "*"
-})
-vim.api.nvim_create_user_command("TaskGoto", function()
-    local line = vim.api.nvim_get_current_line()
-    local _, col = unpack(vim.api.nvim_win_get_cursor(0))
-    col = col + 1
+        nargs = "*"
+    })
+    vim.api.nvim_create_user_command("TaskGoto", function()
+        local line = vim.api.nvim_get_current_line()
+        local _, col = unpack(vim.api.nvim_win_get_cursor(0))
+        col = col + 1
 
-    local reg = ([[TASK%((%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%d%d%d)%)]])
-    local s, e, id = line:find(reg)
+        local s, e, id = match_task_id(line)
 
-    if s and e then
-        if col >= s and col <= e then
-            local path = find_path()
-            if path == nil then
-                print("Task dir not found")
-                return
-            end
-            local file = vim.fs.joinpath(path, ("%s.md"):format(id))
-            if vim.uv.fs_stat(file) ~= nil then
-                if menu then
-                    vim.api.nvim_win_close(0, true)
-                    menu = false
+
+        if s and e then
+            if col >= s and col <= e then
+                local path = find_path()
+                if path == nil then
+                    print("Task dir not found")
+                    return
                 end
-                vim.cmd(("%s %s"):format(cmd,file))
+                local file = vim.fs.joinpath(path, ("%s.md"):format(id))
+                if vim.uv.fs_stat(file) ~= nil then
+                    if menu then
+                        vim.api.nvim_win_close(0, true)
+                        menu = false
+                    end
+                    vim.cmd(("%s %s"):format(cmd, file))
+                    if hide then
+                        vim.api.nvim_set_option_value("bufhidden", "wipe", {
+                            buf = 0
+                        })
+                    end
+                    return
+                else
+                    print(("Task %s not found"):format(id))
+                    return
+                end
+            end
+        end
+        print("No Tasks found")
+    end, {})
+
+    vim.api.nvim_create_user_command('TaskInit', function(_)
+        local cwd = cwdfn()
+        vim.fn.mkdir(vim.fs.joinpath(cwd, ".tasks"))
+    end, {})
+    vim.api.nvim_create_user_command("TaskFromTodo", function(_)
+        --TASK(20251206-004408-812-n6-024): add support for block comments
+        local line = vim.api.nvim_get_current_line()
+        local reg = ([[(%%s*%s%%s*)TODO (.*)]]):format(
+            vim.bo.commentstring:format(""):gsub("^%s+", ""):gsub("%s+$", "")
+        );
+        local prefix, suffix = line:match(reg)
+        if prefix and suffix then
+            local path = find_path()
+            if path then
+                local id = create_id()
+                local file = vim.fs.joinpath(path, ("%s.md"):format(id))
+                vim.fn.writefile({
+                    ("# %s"):format(suffix),
+                    "",
+                    "- OPEN",
+                    -- any extra details would go after this
+                }, file)
+                vim.cmd.TaskGenerateMarkdown(); -- see TASK(20260430-090400-752-n6-301)
+                local row = vim.api.nvim_win_get_cursor(0)[1]
+                vim.api.nvim_buf_set_lines(0, row - 1, row, false, {
+                    ("%sTASK(%s): %s"):format(
+                        prefix, id, suffix
+                    )
+                })
+                vim.cmd(("%s %s"):format(cmd, file))
                 if hide then
                     vim.api.nvim_set_option_value("bufhidden", "wipe", {
                         buf = 0
                     })
                 end
-                return
             else
-                print(("Task %s not found"):format(id))
-                return
-            end
-        end
-    end
-    print("No Tasks found")
-end, {})
-
-vim.api.nvim_create_user_command('TaskInit', function(_)
-    local cwd = cwdfn()
-    vim.fn.mkdir(vim.fs.joinpath(cwd, ".tasks"))
-end, {})
-vim.api.nvim_create_user_command("TaskFromTodo", function(_)
-    --TASK(20251206-004408-812-n6-024): add support for block comments
-    local line = vim.api.nvim_get_current_line()
-    local reg = ([[(%%s*%s%%s*)TODO (.*)]]):format(
-        vim.bo.commentstring:format(""):gsub("^%s+", ""):gsub("%s+$", "")
-    );
-    local prefix, suffix = line:match(reg)
-    if prefix and suffix then
-        local path = find_path()
-        if path then
-            local id = create_id()
-            local file = vim.fs.joinpath(path, ("%s.md"):format(id))
-            vim.fn.writefile({
-                ("# %s"):format(suffix),
-                "",
-                "- OPEN",
-                -- any extra details would go after this
-            }, file)
-            vim.cmd.TaskGenerateMarkdown(); -- see TASK(20260430-090400-752-n6-301)
-            local row = vim.api.nvim_win_get_cursor(0)[1]
-            vim.api.nvim_buf_set_lines(0, row-1, row, false, {
-                ("%sTASK(%s): %s"):format(
-                    prefix, id, suffix
-                )
-            })
-            vim.cmd(("%s %s"):format(cmd,file))
-            if hide then
-                vim.api.nvim_set_option_value("bufhidden", "wipe", {
-                    buf = 0
-                })
+                print("Task dir not found")
             end
         else
-            print("Task dir not found")
+            print("No TODO comment found")
         end
-    else
-        print("No TODO comment found")
-    end
-end, {})
+    end, {})
 end
 
 function M.get_comment()
     local line = vim.api.nvim_get_current_line()
     local _, col = unpack(vim.api.nvim_win_get_cursor(0))
     col = col + 1
-
-    local reg = ([[(TASK%(%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d%-%d%d%d%-[np]%d%-%d%d%d%))]])
-    local s, e, full = line:find(reg)
+    local s, e, _, full = match_task_id(line)
 
     if s and e then
         if col >= s and col <= e then
